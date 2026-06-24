@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Weekly Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
+
+  :root {
+    --cream: #FAF7F2;
+    --warm-white: #FDF9F5;
+    --dusty-rose: #D4A5A0;
+    --deep-rose: #B07870;
+    --sage: #9AAF9A;
+    --deep-sage: #6E8A6E;
+    --gold: #C9A96E;
+    --ink: #2C2420;
+    --soft-ink: #5C4F4A;
+    --mist: #EDE8E2;
+    --lavender: #C4B8D4;
+    --deep-lav: #9B8BB4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--cream);
+    font-family: 'Jost', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  .page { max-width: 900px; margin: 0 auto; }
+
+  .header {
+    text-align: center; margin-bottom: 32px;
+    padding-bottom: 24px; border-bottom: 1px solid var(--dusty-rose);
+    position: relative;
+  }
+  .header::after {
+    content: '✦'; position: absolute; bottom: -10px; left: 50%;
+    transform: translateX(-50%); background: var(--cream);
+    padding: 0 12px; color: var(--dusty-rose); font-size: 13px;
+  }
+  .eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--deep-rose); margin-bottom: 8px; font-weight: 300; }
+  h1 { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 40px; color: var(--ink); line-height: 1.1; }
+  h1 em { font-style: italic; color: var(--deep-rose); }
+  .sub { font-size: 11px; font-weight: 300; color: var(--soft-ink); letter-spacing: 1.5px; margin-top: 8px; }
+
+  .save-indicator {
+    position: fixed; top: 12px; right: 16px;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--deep-rose); opacity: 0; transition: opacity 0.3s;
+    background: var(--cream); padding: 4px 10px; border-radius: 20px;
+    border: 1px solid var(--dusty-rose);
+  }
+  .save-indicator.show { opacity: 1; }
+
+  .how-to {
+    background: var(--warm-white); border: 1px solid var(--mist);
+    border-left: 3px solid var(--deep-lav); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 20px; cursor: pointer;
+  }
+  .how-title { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--deep-lav); display: flex; justify-content: space-between; }
+  .how-body { display: none; margin-top: 12px; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; }
+  .how-body.open { display: grid; }
+  .how-tip { font-size: 11px; color: var(--soft-ink); line-height: 1.6; }
+  .how-tip strong { color: var(--ink); display: block; margin-bottom: 3px; font-weight: 500; }
+
+  .week-nav { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 24px; }
+  .nav-btn {
+    background: none; border: 1px solid var(--mist); color: var(--soft-ink);
+    width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 16px;
+  }
+  .nav-btn:hover { border-color: var(--dusty-rose); color: var(--deep-rose); }
+  .week-label { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--soft-ink); min-width: 220px; text-align: center; }
+
+  .intention-bar {
+    background: linear-gradient(135deg, var(--deep-rose), var(--dusty-rose));
+    border-radius: 12px; padding: 16px 22px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .intention-bar label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.8); white-space: nowrap; }
+  .intention-bar input {
+    background: rgba(255,255,255,0.2); border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.5);
+    color: white; font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-style: italic; padding: 4px 8px;
+    flex: 1; outline: none; min-width: 0;
+  }
+  .intention-bar input::placeholder { color: rgba(255,255,255,0.5); }
+
+  .pills { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .pill {
+    flex: 1; min-width: 120px; background: var(--warm-white);
+    border: 1px solid var(--mist); border-radius: 10px; padding: 12px 14px; text-align: center;
+  }
+  .pill-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--soft-ink); opacity: 0.65; margin-bottom: 4px; }
+  .pill-val { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; line-height: 1; }
+
+  .legend {
+    display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px;
+    padding: 10px 16px; background: var(--warm-white);
+    border: 1px solid var(--mist); border-radius: 10px;
+  }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--soft-ink); }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .days-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 8px; margin-bottom: 24px; }
+  @media(max-width:680px){ .days-grid { grid-template-columns: repeat(2,1fr); } }
+
+  .day-card {
+    background: var(--warm-white); border: 1px solid var(--mist);
+    border-radius: 12px; padding: 12px 10px;
+  }
+  .day-card.today { border-color: var(--dusty-rose); background: #FDF4F3; }
+  .day-name { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--soft-ink); opacity: 0.55; margin-bottom: 2px; }
+  .day-date { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--ink); margin-bottom: 7px; line-height: 1; }
+  .day-card.today .day-date { color: var(--deep-rose); }
+  .day-badge {
+    display: inline-block; font-size: 8px; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 20px;
+    margin-bottom: 9px; font-weight: 500;
+  }
+  .task-list { display: flex; flex-direction: column; gap: 5px; }
+  .task-row { display: flex; align-items: flex-start; gap: 6px; cursor: pointer; }
+  .cb {
+    width: 13px; height: 13px; min-width: 13px;
+    border: 1px solid var(--dusty-rose); border-radius: 3px;
+    margin-top: 1px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+  }
+  .cb.checked { background: var(--dusty-rose); border-color: var(--dusty-rose); }
+  .cb.checked::after { content: '✓'; color: white; font-size: 9px; }
+  .task-text { font-size: 9px; color: var(--soft-ink); font-weight: 300; line-height: 1.4; }
+  .task-text.done { text-decoration: line-through; opacity: 0.4; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media(max-width:560px){ .two-col { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--warm-white); border: 1px solid var(--mist); border-radius: 14px; padding: 18px 20px; }
+  .panel-title { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--soft-ink); opacity: 0.65; margin-bottom: 14px; }
+
+  .biz-task {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 11px; border-radius: 8px; background: var(--cream);
+    cursor: pointer; margin-bottom: 7px;
+  }
+  .biz-cb {
+    width: 15px; height: 15px; min-width: 15px;
+    border: 1.5px solid var(--gold); border-radius: 50%;
+    margin-top: 2px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .biz-cb.checked { background: var(--gold); border-color: var(--gold); }
+  .biz-cb.checked::after { content: '✓'; color: white; font-size: 10px; }
+  .biz-label { font-size: 11px; color: var(--ink); line-height: 1.4; }
+  .biz-label.done { text-decoration: line-through; opacity: 0.4; }
+  .biz-cat { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); opacity: 0.8; margin-top: 2px; }
+
+  .sc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .sc-item {
+    background: var(--cream); border-radius: 10px; padding: 11px 8px;
+    text-align: center; cursor: pointer; border: 1.5px solid transparent; transition: all 0.2s;
+  }
+  .sc-item.done { border-color: var(--deep-lav); background: #F0ECF8; }
+  .sc-icon { font-size: 18px; margin-bottom: 3px; }
+  .sc-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--soft-ink); opacity: 0.7; }
+
+  .wins-list { display: flex; flex-direction: column; gap: 10px; }
+  .win-row { display: flex; align-items: center; gap: 10px; }
+  .win-star { color: var(--gold); font-size: 14px; }
+  .win-input {
+    flex: 1; background: transparent; border: none;
+    border-bottom: 1px solid var(--mist); padding: 6px 4px;
+    font-family: 'Cormorant Garamond', serif; font-size: 14px;
+    font-style: italic; color: var(--ink); outline: none;
+  }
+  .win-input:focus { border-color: var(--gold); }
+  .win-input::placeholder { color: var(--soft-ink); opacity: 0.3; }
+
+  .mood-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  .mood-btn {
+    background: var(--cream); border: 1.5px solid var(--mist);
+    border-radius: 30px; padding: 6px 12px; cursor: pointer;
+    font-size: 11px; font-family: inherit; color: var(--soft-ink); transition: all 0.15s;
+  }
+  .mood-btn.selected { background: var(--dusty-rose); color: white; border-color: var(--dusty-rose); }
+
+  .notes-area {
+    width: 100%; background: var(--cream); border: 1px solid var(--mist);
+    border-radius: 10px; padding: 12px; font-family: inherit;
+    font-size: 12px; color: var(--soft-ink); font-weight: 300;
+    resize: vertical; min-height: 90px; outline: none; line-height: 1.8;
+  }
+  .notes-area:focus { border-color: var(--dusty-rose); }
+
+  .footer { text-align: center; margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--mist); }
+  .footer p { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-style: italic; color: var(--soft-ink); opacity: 0.7; line-height: 1.6; }
+  .footer span { display: block; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--deep-rose); margin-top: 8px; }
+
+  .reset-btn {
+    display: block; margin: 20px auto 0; background: none;
+    border: 1px solid var(--mist); color: var(--soft-ink);
+    font-family: inherit; font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; padding: 8px 20px; border-radius: 20px;
+    cursor: pointer; opacity: 0.5;
+  }
+  .reset-btn:hover { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="save-indicator" id="saveIndicator">✓ Saved</div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="eyebrow">My Life · My Brand · My Week</div>
+    <h1>This Week, I <em>Rise</em></h1>
+    <div class="sub">Morning Routine · Tea Kit Business · Family · Fitness · Self</div>
+  </div>
+
+  <!-- How to use -->
+  <div class="how-to" onclick="toggleHow()">
+    <div class="how-title">
+      <span>✦ How to use this tracker</span>
+      <span id="howToggle">▾ show</span>
+    </div>
+    <div class="how-body" id="howBody">
+      <div class="how-tip"><strong>🌅 Every Morning</strong>Tap each checkbox as you complete it — coffee, intention, business seed, workout.</div>
+      <div class="how-tip"><strong>☕ Weekly Intention</strong>Type your focus for the week in the rose banner at the top.</div>
+      <div class="how-tip"><strong>💼 Business Tasks</strong>5 starter tasks pre-loaded. Check them off as you go each week.</div>
+      <div class="how-tip"><strong>✨ Self Care</strong>Tap the bubbles for anything you do for yourself.</div>
+      <div class="how-tip"><strong>🌸 End of Week</strong>Fill your wins, pick your mood, reflect in notes, then reset.</div>
+      <div class="how-tip"><strong>💾 Auto Saves</strong>Everything saves automatically to this browser. Come back anytime!</div>
+    </div>
+  </div>
+
+  <!-- Week Nav -->
+  <div class="week-nav">
+    <button class="nav-btn" onclick="changeWeek(-1)">‹</button>
+    <div class="week-label" id="weekLabel"></div>
+    <button class="nav-btn" onclick="changeWeek(1)">›</button>
+  </div>
+
+  <!-- Intention -->
+  <div class="intention-bar">
+    <label>This week I intend to</label>
+    <input type="text" id="intention" placeholder="e.g. show up for my dream every single morning…" oninput="saveData()">
+  </div>
+
+  <!-- Pills -->
+  <div class="pills">
+    <div class="pill"><div class="pill-label">Morning Routine</div><div class="pill-val" id="p1" style="color:#B07870">0/7</div></div>
+    <div class="pill"><div class="pill-label">Business Seeds</div><div class="pill-val" id="p2" style="color:#C9A96E">0/7</div></div>
+    <div class="pill"><div class="pill-label">Workouts</div><div class="pill-val" id="p3" style="color:#6E8A6E">0/5</div></div>
+    <div class="pill"><div class="pill-label">Self Care</div><div class="pill-val" id="p4" style="color:#9B8BB4">0/6</div></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#6E8A6E"></div>Mon · Wed · Fri — Home Workout</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#C9A96E"></div>Tue · Thu — Gym Day</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#9B8BB4"></div>Sat · Sun — Rest & Family</div>
+  </div>
+
+  <!-- Days -->
+  <div class="days-grid" id="daysGrid"></div>
+
+  <!-- Business + Self Care -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">☕ Tea Kit — This Week's Tasks</div>
+      <div id="bizTasks"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">✨ Self Care This Week</div>
+      <div class="sc-grid" id="scGrid"></div>
+    </div>
+  </div>
+
+  <!-- Wins + Mood -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">🌸 Weekly Wins</div>
+      <div class="wins-list" id="winsList"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">💭 How I Felt This Week</div>
+      <div class="mood-row" id="moodRow"></div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-title">📝 Notes & Ideas This Week</div>
+    <textarea class="notes-area" id="notes" placeholder="Tea kit ideas, things I noticed, things I want to remember…" oninput="saveData()"></textarea>
+  </div>
+
+  <div class="footer">
+    <p>"You have been doing it for others your whole life.<br>Now it is your turn."</p>
+    <span>— Your reminder, every week</span>
+  </div>
+  <button class="reset-btn" onclick="resetWeek()">Reset This Week</button>
+
+</div>
+
+<script>
+const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+const DAY_CONFIG = [
+  { type:'family', badge:'🌸 Family Day',   bl:'#D4A5A0', bb:'#FDE8E8', bc:'#B07870', tasks:['Slow morning coffee','Set weekly intention','Tea ritual with kids','Rest & recharge'] },
+  { type:'home',   badge:'🏠 Home Workout', bl:'#6E8A6E', bb:'#EBF3EB', bc:'#6E8A6E', tasks:['Morning quiet + coffee','Write daily intention','5-min tea kit task','Home workout 💪'] },
+  { type:'gym',    badge:'💪 Gym Day',       bl:'#C9A96E', bb:'#FBF4E8', bc:'#9A7A40', tasks:['Morning quiet + coffee','Write daily intention','5-min tea kit task','Hit the gym 🏋️'] },
+  { type:'home',   badge:'🏠 Home Workout', bl:'#6E8A6E', bb:'#EBF3EB', bc:'#6E8A6E', tasks:['Morning quiet + coffee','Write daily intention','5-min tea kit task','Home workout 💪'] },
+  { type:'gym',    badge:'💪 Gym Day',       bl:'#C9A96E', bb:'#FBF4E8', bc:'#9A7A40', tasks:['Morning quiet + coffee','Write daily intention','5-min tea kit task','Hit the gym 🏋️'] },
+  { type:'home',   badge:'🏠 Home Workout', bl:'#6E8A6E', bb:'#EBF3EB', bc:'#6E8A6E', tasks:['Morning quiet + coffee','Write daily intention','5-min tea kit task','Home workout 💪'] },
+  { type:'rest',   badge:'☁️ Rest Day',      bl:'#9B8BB4', bb:'#F0ECF8', bc:'#9B8BB4', tasks:['Rest & recover','Be present with family','Reflect on the week','Plan next week'] },
+];
+const BIZ = [
+  { label:'Research 3 Fresno boutiques to pitch', cat:'Brand · Retail' },
+  { label:'Write what makes your tea kit different', cat:'Brand · Voice' },
+  { label:'Build an Instagram mood board for your brand', cat:'Marketing · Visual' },
+  { label:'List everything that could go inside the kit', cat:'Product · Concept' },
+  { label:'Listen to 1 How I Built This episode', cat:'Mindset · Learning' },
+];
+const SC = [
+  {icon:'🫖',label:'Tea Ritual'},{icon:'📖',label:'Read'},{icon:'🌿',label:'Fresh Air'},
+  {icon:'🛁',label:'Rest'},{icon:'🎧',label:'Podcast'},{icon:'✍️',label:'Journal'}
+];
+const MOODS = ['🌟 Energized','🌿 Grounded','🌊 Overwhelmed','☁️ Low','🌸 Hopeful','🔥 Motivated'];
+const WIN_PH = ['Something I\'m proud of…','A moment with my kids…','One step toward my dream…'];
+
+let weekOffset = 0;
+const today = new Date();
+
+function weekKey(o) {
+  const d = getWeekStart(o);
+  return `tracker-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function getWeekStart(o) {
+  const d = new Date(today);
+  d.setDate(d.getDate() - d.getDay() + o * 7);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function fmt(d) { return d.toLocaleDateString('en-US',{month:'long',day:'numeric'}); }
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(weekKey(weekOffset));
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+let saveTimer;
+function saveData() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const data = {
+      intention: document.getElementById('intention').value,
+      notes: document.getElementById('notes').value,
+      checks: {},
+      biz: [],
+      sc: [],
+      mood: document.querySelector('.mood-btn.selected')?.textContent || '',
+      wins: []
+    };
+    document.querySelectorAll('[data-day]').forEach(cb => {
+      data.checks[cb.dataset.day + '-' + cb.dataset.task] = cb.classList.contains('checked');
+    });
+    document.querySelectorAll('[data-biz]').forEach((cb,i) => {
+      data.biz[i] = cb.classList.contains('checked');
+    });
+    document.querySelectorAll('[data-sc]').forEach((el,i) => {
+      data.sc[i] = el.classList.contains('done');
+    });
+    document.querySelectorAll('.win-input').forEach(inp => {
+      data.wins.push(inp.value);
+    });
+    localStorage.setItem(weekKey(weekOffset), JSON.stringify(data));
+    const ind = document.getElementById('saveIndicator');
+    ind.classList.add('show');
+    setTimeout(() => ind.classList.remove('show'), 1500);
+    updatePills();
+  }, 300);
+}
+
+function renderWeek() {
+  const start = getWeekStart(weekOffset);
+  const end = new Date(start); end.setDate(end.getDate()+6);
+  document.getElementById('weekLabel').textContent = `${fmt(start)} — ${fmt(end)}`;
+
+  const data = loadData();
+
+  // Intention
+  document.getElementById('intention').value = data.intention || '';
+  document.getElementById('notes').value = data.notes || '';
+
+  // Days
+  const grid = document.getElementById('daysGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(d.getDate()+i);
+    const isToday = d.toDateString() === today.toDateString();
+    const cfg = DAY_CONFIG[i];
+    const div = document.createElement('div');
+    div.className = 'day-card' + (isToday ? ' today' : '');
+    div.style.borderLeft = `3px solid ${cfg.bl}`;
+    div.innerHTML = `
+      <div class="day-name">${DAYS[i]}</div>
+      <div class="day-date">${d.getDate()}</div>
+      <div class="day-badge" style="background:${cfg.bb};color:${cfg.bc}">${cfg.badge}</div>
+      <div class="task-list">
+        ${cfg.tasks.map((t,ti) => {
+          const checked = data.checks && data.checks[`${i}-${ti}`];
+          return `<div class="task-row" onclick="toggleCheck(this,${i},${ti})">
+            <div class="cb${checked?' checked':''}" data-day="${i}" data-task="${ti}"></div>
+            <span class="task-text${checked?' done':''}">${t}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    grid.appendChild(div);
+  }
+
+  // Biz tasks
+  const bizEl = document.getElementById('bizTasks');
+  bizEl.innerHTML = BIZ.map((b,i) => {
+    const checked = data.biz && data.biz[i];
+    return `<div class="biz-task" onclick="toggleBiz(this,${i})">
+      <div class="biz-cb${checked?' checked':''}" data-biz="${i}"></div>
+      <div>
+        <div class="biz-label${checked?' done':''}">${b.label}</div>
+        <div class="biz-cat">${b.cat}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // SC
+  const scEl = document.getElementById('scGrid');
+  scEl.innerHTML = SC.map((s,i) => {
+    const done = data.sc && data.sc[i];
+    return `<div class="sc-item${done?' done':''}" data-sc="${i}" onclick="toggleSC(this)">
+      <div class="sc-icon">${s.icon}</div>
+      <div class="sc-label">${s.label}</div>
+    </div>`;
+  }).join('');
+
+  // Mood
+  const moodEl = document.getElementById('moodRow');
+  moodEl.innerHTML = MOODS.map(m =>
+    `<button class="mood-btn${data.mood===m?' selected':''}" onclick="selectMood(this)">${m}</button>`
+  ).join('');
+
+  // Wins
+  const winsEl = document.getElementById('winsList');
+  winsEl.innerHTML = WIN_PH.map((ph,i) =>
+    `<div class="win-row">
+      <span class="win-star">★</span>
+      <input class="win-input" type="text" placeholder="${ph}" value="${(data.wins&&data.wins[i])||''}" oninput="saveData()">
+    </div>`
+  ).join('');
+
+  updatePills();
+}
+
+function toggleCheck(row, day, task) {
+  const cb = row.querySelector('.cb');
+  const txt = row.querySelector('.task-text');
+  cb.classList.toggle('checked');
+  txt.classList.toggle('done');
+  saveData();
+}
+
+function toggleBiz(row, i) {
+  row.querySelector('.biz-cb').classList.toggle('checked');
+  row.querySelector('.biz-label').classList.toggle('done');
+  saveData();
+}
+
+function toggleSC(el) { el.classList.toggle('done'); saveData(); }
+
+function selectMood(btn) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  saveData();
+}
+
+function updatePills() {
+  const checks = document.querySelectorAll('[data-task="0"]');
+  document.getElementById('p1').textContent = [...checks].filter(c=>c.classList.contains('checked')).length + '/7';
+  const seeds = document.querySelectorAll('[data-task="2"]');
+  document.getElementById('p2').textContent = [...seeds].filter(c=>c.classList.contains('checked')).length + '/7';
+  const wo = document.querySelectorAll('[data-task="3"]');
+  document.getElementById('p3').textContent = [...wo].filter(c=>c.classList.contains('checked')).length + '/5';
+  document.getElementById('p4').textContent = document.querySelectorAll('.sc-item.done').length + '/6';
+}
+
+function changeWeek(dir) { weekOffset += dir; renderWeek(); }
+
+function resetWeek() {
+  if (!confirm('Reset this week?')) return;
+  localStorage.removeItem(weekKey(weekOffset));
+  renderWeek();
+}
+
+function toggleHow() {
+  const b = document.getElementById('howBody');
+  const t = document.getElementById('howToggle');
+  b.classList.toggle('open');
+  t.textContent = b.classList.contains('open') ? '▴ hide' : '▾ show';
+}
+
+renderWeek();
+</script>
+</body>
+</html>
